@@ -53,9 +53,9 @@ class Multiply < Struct.new(:left, :right)
 
   def reduce
     if left.reducible?
-      Add.new(left.reduce, right)
+      Multiply.new(left.reduce, right)
     elsif right.reducible?
-      Add.new(left, right.reduce)
+      Multiply.new(left, right.reduce)
     else
       Number.new(left.value * right.value)
     end
