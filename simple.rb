@@ -26,6 +26,16 @@ class Add < Struct.new(:left, :right)
   def reducible?
     true
   end
+
+  def reduce
+    if left.reducible?
+      Add.new(left.reduce, right)
+    elsif right.reducible?
+      Add.new(left, right.reduce)
+    else
+      Number.new(left.value + right.value)
+    end
+  end
 end
 
 class Multiply < Struct.new(:left, :right)
@@ -40,9 +50,19 @@ class Multiply < Struct.new(:left, :right)
   def reducible?
     true
   end
+
+  def reduce
+    if left.reducible?
+      Add.new(left.reduce, right)
+    elsif right.reducible?
+      Add.new(left, right.reduce)
+    else
+      Number.new(left.value * right.value)
+    end
+  end
 end
 
-add = Add.new(
+expr = Add.new(
   Multiply.new(Number.new(1), Number.new(2)),
   Multiply.new(Number.new(3), Number.new(4))
 )
