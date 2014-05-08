@@ -187,7 +187,7 @@ end
 
 class Sequence < Struct.new(:first, :second)
   def to_s
-    "#{first} #{second}"
+    "#{first}; #{second}"
   end
 
   def inspect
