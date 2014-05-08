@@ -158,6 +158,33 @@ class Assign < Struct.new(:name, :expression)
   end
 end
 
+class If < Struct.new(:condition, :consequence, :alternative)
+  def to_s
+    "if (#{condition}) { #{consequence} } else { #{alternative} }"
+  end
+
+  def inspect
+    "«#{self}»"
+  end
+
+  def reducible?
+    true
+  end
+
+  def reduce(environment)
+    if condition.reducible?
+      [If.new(condition.reduce(environment), consequence, alternative), environment]
+    else
+      case condition
+      when Boolean.new(true)
+        [consequence, environment]
+      when Boolean.new(false)
+        [alternative, environment]
+      end
+    end
+  end
+end
+
 class Machine < Struct.new(:statement, :environment)
   def step
     self.statement, self.environment = statement.reduce(environment)
@@ -174,6 +201,9 @@ class Machine < Struct.new(:statement, :environment)
 end
 
 machine = Machine.new(
-  Assign.new(:x, Add.new(Variable.new(:x), Number.new(1))), { x: Number.new(2) }
+  If.new(
+    Variable.new(:x), Assign.new(:y, Number.new(1)), Assign.new(:y, Number.new(2))
+  ),
+  { x: Boolean.new(true) }
 )
 machine.run
