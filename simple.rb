@@ -209,6 +209,24 @@ class Sequence < Struct.new(:first, :second)
   end
 end
 
+class While < Struct.new(:condition, :body)
+  def to_s
+    "while (#{condition}) { #{body} }"
+  end
+
+  def inspect
+    "«#{self}»"
+  end
+
+  def reducible?
+    true
+  end
+
+  def reduce(environment)
+    [If.new(condition, Sequence.new(body, self), DoNothing.new), environment]
+  end
+end
+
 class Machine < Struct.new(:statement, :environment)
   def step
     self.statement, self.environment = statement.reduce(environment)
@@ -225,9 +243,9 @@ class Machine < Struct.new(:statement, :environment)
 end
 
 machine = Machine.new(
-Sequence.new(
-Assign.new(:x, Add.new(Number.new(1), Number.new(1))),
-Assign.new(:y, Add.new(Variable.new(:x), Number.new(3))) ),
-{}
+While.new(
+LessThan.new(Variable.new(:x), Number.new(5)),
+Assign.new(:x, Multiply.new(Variable.new(:x), Number.new(3))) ),
+{ x: Number.new(1) }
 )
 machine.run
