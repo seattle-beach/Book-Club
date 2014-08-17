@@ -12,6 +12,10 @@ class Number < Struct.new(:value)
   def reducible?
     false
   end
+
+  def evaluate(name)
+    self
+  end
 end
 
 class Add < Struct.new(:left, :right)
@@ -35,6 +39,10 @@ class Add < Struct.new(:left, :right)
     else
       Number.new(left.value + right.value)
     end
+  end
+
+  def evaluate(environment)
+    Number.new(left.evaluate(environment).value + right.evaluate(environment).value)
   end
 end
 
@@ -60,6 +68,10 @@ class Multiply < Struct.new(:left, :right)
       Number.new(left.value * right.value)
     end
   end
+
+  def evaluate(environment)
+    NUmber.new(left.evaluate(environment).value * right.evaluate(environment).value)
+  end
 end
 
 class Boolean < Struct.new(:value)
@@ -73,6 +85,10 @@ class Boolean < Struct.new(:value)
 
   def reducible?
     false
+  end
+
+  def evaluate(environment)
+    self
   end
 end
 
@@ -98,6 +114,10 @@ class LessThan < Struct.new(:left, :right)
       Boolean.new(left.value < right.value)
     end
   end
+
+  def evaluate(environment)
+    Boolean.new(left.evaluate(environment).value < right.evaluate(environment).value)
+  end
 end
 
 class Variable < Struct.new(:name)
@@ -114,6 +134,10 @@ class Variable < Struct.new(:name)
   end
 
   def reduce(environment)
+    environment[name]
+  end
+
+  def evaluate(environment)
     environment[name]
   end
 end
@@ -242,10 +266,17 @@ class Machine < Struct.new(:statement, :environment)
   end
 end
 
-machine = Machine.new(
-While.new(
-LessThan.new(Variable.new(:x), Number.new(5)),
-Assign.new(:x, Multiply.new(Variable.new(:x), Number.new(3))) ),
-{ x: Number.new(1) }
-)
-machine.run
+# machine = Machine.new(
+# While.new(
+# LessThan.new(Variable.new(:x), Number.new(5)),
+# Assign.new(:x, Multiply.new(Variable.new(:x), Number.new(3))) ),
+# { x: Number.new(1) }
+# )
+# machine.run
+
+p Number.new(23).evaluate({})
+p Variable.new(:x).evaluate(x: Number.new(23))
+p LessThan.new(
+  Add.new(Variable.new(:x), Number.new(2)),
+  Variable.new(:y)
+).evaluate(x: Number.new(2), y: Number.new(5))
