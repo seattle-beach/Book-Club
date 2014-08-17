@@ -70,7 +70,7 @@ class Multiply < Struct.new(:left, :right)
   end
 
   def evaluate(environment)
-    NUmber.new(left.evaluate(environment).value * right.evaluate(environment).value)
+    Number.new(left.evaluate(environment).value * right.evaluate(environment).value)
   end
 end
 
@@ -270,6 +270,15 @@ class While < Struct.new(:condition, :body)
   def reduce(environment)
     [If.new(condition, Sequence.new(body, self), DoNothing.new), environment]
   end
+
+  def evaluate(environment)
+    case condition.evaluate(environment)
+    when Boolean.new(true)
+      evaluate(body.evaluate(environment))
+    when Boolean.new(false)
+      environment
+    end
+  end
 end
 
 class Machine < Struct.new(:statement, :environment)
@@ -287,8 +296,9 @@ class Machine < Struct.new(:statement, :environment)
   end
 end
 
-statement = Sequence.new(
-  Assign.new(:x, Add.new(Number.new(1), Number.new(1))),
-  Assign.new(:y, Add.new(Variable.new(:x), Number.new(3)))
+statement =
+  While.new(
+    LessThan.new(Variable.new(:x), Number.new(5)),
+    Assign.new(:x, Multiply.new(Variable.new(:x), Number.new(3)))
 )
-p statement.evaluate({})
+p statement.evaluate(x: Number.new(1))
