@@ -1,5 +1,7 @@
 # 01
 
+- [ ] Windows annoyances - executable files and Windows EOLs.
+
 # 02
 
 - [ ] Is there a more efficient FullAdder based on HalfAdders?
