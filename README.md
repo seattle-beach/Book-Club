@@ -1,8 +1,10 @@
-# 01
+# nand2tetris
+
+## 01
 
 - [ ] Windows annoyances - executable files and Windows EOLs.
 
-# 02
+## 02
 
 - [ ] Is there a more efficient FullAdder based on HalfAdders?
 
