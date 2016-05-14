@@ -1,7 +1,13 @@
-desc 'Test w/Hardware Simulator'
-task :test, [:file] do |t, args|
+desc 'Run a .tst file'
+task :test, [:file, :type] do |t, args|
   tst_file = "projects/#{args[:file]}.tst"
-  cmd = File.expand_path('../tools/HardwareSimulator.sh', __FILE__)
+  script = case args[:type]
+           when 'hs'
+             'HardwareSimulator'
+           when 'ce'
+             'CPUEmulator'
+           end
+  cmd = File.expand_path("../tools/#{script}.sh", __FILE__)
 
   require 'open3'
   _, stdout, stderr = Open3.popen3(cmd, tst_file)
@@ -21,7 +27,12 @@ task :test, [:file] do |t, args|
   compare_to = tst[/compare-to ([.\w]+),/, 1]
 
   Dir.chdir(File.dirname(tst_file))
-  puts `diff #{compare_to} #{output_file}`
+  puts <<-PUTS
+Expected:
+  #{File.readlines(compare_to)[line].chomp}
+Actual:
+  #{File.readlines(output_file)[line].chomp}
+  PUTS
 end
 
 desc 'Translate ASM to Hack'
