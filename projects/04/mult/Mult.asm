@@ -22,12 +22,10 @@
   @END
   D;JEQ
 //   r2 += r1
-  @2
-  D=M
   @1
-  D=D+M
+  D=M
   @2
-  M=D
+  M=M+D
 //   r3 -= 1
   @3
   M=M-1
