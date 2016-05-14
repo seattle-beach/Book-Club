@@ -23,3 +23,11 @@ task :test, [:file] do |t, args|
   Dir.chdir(File.dirname(tst_file))
   puts `diff #{compare_to} #{output_file}`
 end
+
+desc 'Translate ASM to Hack'
+task :assemble, [:file] do |t, args|
+  asm = "projects/#{args[:file]}.asm"
+  cmd = File.expand_path('../tools/Assembler.sh', __FILE__)
+  sh cmd, asm
+  mv File.expand_path('~/Dropbox/src/github.hack'), asm.pathmap('%X.hack')
+end
