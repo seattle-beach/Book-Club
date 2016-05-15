@@ -10,7 +10,7 @@ class Tst
     dir = path.pathmap('%d')
     @load = File.join(dir, raw[/load ([.\w]+),/, 1])
     @output_file = File.join(dir, raw[/output-file ([.\w]+),/, 1])
-    @compare_to = File.join(raw[/compare-to ([.\w]+),/, 1])
+    @compare_to = File.join(dir, raw[/compare-to ([.\w]+),/, 1])
   end
 
   def run!
