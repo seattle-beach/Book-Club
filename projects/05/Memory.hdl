@@ -5,7 +5,7 @@
 
 /**
  * The complete address space of the Hack computer's memory,
- * including RAM and memory-mapped I/O. 
+ * including RAM and memory-mapped I/O.
  * The chip facilitates read and write operations, as follows:
  *     Read:  out(t) = Memory[address(t)](t)
  *     Write: if load(t-1) then Memory[address(t-1)](t) = in(t-1)
@@ -27,5 +27,14 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    Mux16(a=ramOut,    b=ioOut,  sel=address[14], out=out);
+    Mux16(a=screenOut, b=kbdOut, sel=address[13], out=ioOut);
+
+    RAM16K(in=in, address=address[0..13], load=ramLoad, out=ramOut);
+    Screen(in=in, address=address[0..12], load=screenLoad, out=screenOut);
+    Keyboard(out=kbdOut);
+
+    And(a=load, b=address[14], out=screenLoad);
+    And(a=load, b=notAddr14, out=ramLoad);
+    Not(in=address[14], out=notAddr14);
 }
