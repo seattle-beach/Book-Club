@@ -15,23 +15,22 @@
   M=D
 // while {
 (LOOP)
-//   if kbd == 0 { // no key is pressed
+// r1 = 0
+  @R1
+  M=0
+
+// if kbd != 0 {
   @KBD
   D=M
   @NOKEY
-  D;JNE
-//     r1 = 0
-  @R1
-  M=0
-  @ENDIF
-  0;JMP
-//   } else { // a key is pressed
-(NOKEY)
-//     r1 = 1
+  D;JEQ
+
+// r1 = -1
   @R1
   M=-1
-//   }
-(ENDIF)
+// }
+(NOKEY)
+
 //  *r0 = r1
   @R1
   D=M
@@ -41,7 +40,7 @@
 //   r0 += 1
   @R0
   M=M+1
-//   r0 &= !32
+//   r0 &= !8192
   @8192
   D=!A
   @R0
