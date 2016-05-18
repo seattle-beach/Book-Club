@@ -36,11 +36,14 @@ class Tst
   end
 
   def results
+    expected = File.readlines(compare_to).map(&:chomp)
+    actual = File.readlines(output_file).map(&:chomp)
     <<-PUTS
+  #{expected[0]}
 Expected:
-  #{File.readlines(compare_to)[line].chomp}
+  #{expected[line]}
 Actual:
-  #{File.readlines(output_file)[line].chomp}
+  #{actual[line]}
     PUTS
   end
 end
