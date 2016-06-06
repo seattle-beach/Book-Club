@@ -4,51 +4,63 @@ require 'assembler'
 
 module Nand2Tetris::Assembler
   class TestParser < Minitest::Test
-    def test_empty
-      p = Parser.new('')
-      assert_equal [], p.commands.to_a
-    end
-
-    def test_whitespace
-      p = Parser.new("  \n\t")
-      assert_equal [], p.commands.to_a
+    def setup
+      @parser = Parser.new
     end
 
     def test_comments
-      p = Parser.new("  // la la la\n@123")
-      assert_equal [Commands::Address.new('123')], p.commands.to_a
+      instructions = @parser.parse('  // Comments are cool')
+      assert_equal [], instructions
+
+      instructions = @parser.parse('// Multiple // Comments')
+      assert_equal [], instructions
+
+      instructions = @parser.parse(<<-INPUT)
+// Multi
+// Line
+// Comments
+      INPUT
+      assert_equal [], instructions
     end
 
-    def test_a_command
-      p = Parser.new('@123')
-      assert_equal [Commands::Address.new('123')], p.commands.to_a
+    def test_a_instructions
+      instructions = @parser.parse('@2')
+      assert_equal [Instructions::A.new(2)], instructions
     end
 
-    def test_c_command
-      p = Parser.new('D=0')
-      assert_equal [Commands::Compute.new(?D, ?0)], p.commands.to_a
+    def test_c_instructions
+      instructions = @parser.parse('D=A')
+      assert_equal [Instructions::C.new(?D, ?A, nil)], instructions
 
-      p = Parser.new('M=1')
-      assert_equal [Commands::Compute.new(?M, ?1)], p.commands.to_a
+      instructions = @parser.parse('D=D+A')
+      assert_equal [Instructions::C.new(?D, 'D+A', nil)], instructions
 
-      p = Parser.new('M=-A')
-      assert_equal [Commands::Compute.new(?M, '-A')], p.commands.to_a
+      instructions = @parser.parse('M=D')
+      assert_equal [Instructions::C.new(?M, ?D, nil)], instructions
+    end
+  end
 
-      p = Parser.new('D=A-1')
-      assert_equal [Commands::Compute.new(?D, 'A-1')], p.commands.to_a
+  class TestInstructions < Minitest::Test
+    def test_a_instruction
+      instruction = Instructions::A.new(2)
+      assert_equal 0b0000_0000_0000_0010, instruction.to_binary
 
-      p = Parser.new('M=D&A')
-      assert_equal [Commands::Compute.new(?M, 'D&A')], p.commands.to_a
+      instruction = Instructions::A.new(3)
+      assert_equal 0b0000_0000_0000_0011, instruction.to_binary
 
-      p = Parser.new('0;JGT')
-      assert_equal [Commands::Jump.new(?0, 'JGT')], p.commands.to_a
-
-      p = Parser.new('D-A;JGT')
-      assert_equal [Commands::Jump.new('D-A', 'JGT')], p.commands.to_a
+      instruction = Instructions::A.new(0)
+      assert_equal 0b0000_0000_0000_0000, instruction.to_binary
     end
 
-    def test_errors
-      assert_raises { Parser.new('M=-0').commands.to_a }
+    def test_c_instruction
+      instruction = Instructions::C.new(?D, ?A, nil)
+      assert_equal 0b1110_1100_0001_0000, instruction.to_binary
+
+      instruction = Instructions::C.new(?D, 'D+A', nil)
+      assert_equal 0b1110_0000_1001_0000, instruction.to_binary
+
+      instruction = Instructions::C.new(?M, ?D, nil)
+      assert_equal 0b1110_0001_1000_1000, instruction.to_binary
     end
   end
 end

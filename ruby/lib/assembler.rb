@@ -1,63 +1,61 @@
 module Nand2Tetris
   module Assembler
-    class ParseError < StandardError
-      def initialize(ss)
-        super(ss.check_until(/\n/) || ss.rest)
-      end
-    end
+    COMPS = {
+      '0'   => 0b0101010,
+      '1'   => 0b0111111,
+      '-1'  => 0b0111010,
+      'D'   => 0b0000110,
+      'A'   => 0b0110000, 'M'   => 0b1110000,
+      '!D'  => 0b0001101,
+      '!A'  => 0b0110001, '!M'  => 0b1110001,
+      '-D'  => 0b0001111,
+      '-A'  => 0b0110011, '-M'  => 0b1110011,
+      'D+1' => 0b0011111,
+      'A+1' => 0b0110111, 'M+1' => 0b1110111,
+      'D-1' => 0b0001110,
+      'A-1' => 0b0110010, 'M-1' => 0b1110010,
+      'D+A' => 0b0000010, 'D+M' => 0b1000010,
+      'D-A' => 0b0010011, 'D-M' => 0b1010011,
+      'A-D' => 0b0000111, 'M-D' => 0b1000111,
+      'D&A' => 0b0000000, 'D&M' => 0b1000000,
+      'D|A' => 0b0010101, 'D|M' => 0b1010101,
+    }
 
     class Parser
-      COMP = / 0
-             | -?1
-             | [!-][DA]
-             | [DA][-+]1
-             | D[-+&|]A
-             | A-D
-             /x
+      def parse(input)
+        input.split("\n").each.with_object([]) {|line, instructions|
+          line.gsub!(/^\s*(.*?)(?:\/\/.*)$/, '\1')
+          next if line.empty?
 
-      attr_reader :input
-
-      def initialize(input)
-        @input = input
-      end
-
-      def commands
-        return enum_for(__method__) unless block_given?
-
-        ss = StringScanner.new(input)
-        until ss.eos?
-          case
-          when ss.scan(/@/)
-            if symbol = ss.scan(/\w+/)
-              yield Commands::Address.new(symbol)
-            else
-              raise ParseError.new(ss)
-            end
-          when comp = ss.scan(COMP)
-            if ss.scan(/;/) && jmp = jmp = ss.scan(/J(GT|EQ|GE|LT|NE|LE|MP)/)
-              yield Commands::Jump.new(comp, jmp)
-            else
-              raise ParseError.new(ss)
-            end
-          when dest = ss.scan(/(D|M)/)
-            if ss.scan(/=/) && comp = ss.scan(COMP)
-              yield Commands::Compute.new(dest, comp)
-            else
-              raise ParseError.new(ss)
-            end
-          when ss.scan(%r(//[^\n]*\n))
-          when ss.scan(/\s+/)
-          else
-            raise ParseError.new(ss)
-          end
-        end
+          instructions << case line
+                          when /^@(\d+)$/
+                            Instructions::A.new($1.to_i)
+                          when /^
+                            (?:([AMD]{1,3}(?==))=)?
+                            (#{COMPS.keys.map {|x| Regexp.escape(x)}.join(?|)})?
+                            (;J(?:GT|EQ|GE|LT|LE|NE|MP))?
+                              $/x
+                            Instructions::C.new($1, $2, $3)
+                          end
+        }
       end
     end
 
-    module Commands
-      Address = Struct.new(:symbol)
-      Compute = Struct.new(:dest, :comp)
-      Jump = Struct.new(:comp, :jmp)
+    module Instructions
+      A = Struct.new(:value) do
+        def to_binary
+          value
+        end
+      end
+
+      C = Struct.new(:dest, :comp, :jump) do
+        def to_binary
+          a = dest.include?(?A) ? 1 : 0
+          m = dest.include?(?M) ? 1 : 0
+          d = dest.include?(?D) ? 1 : 0
+          (0b111 << 13) + (COMPS[comp] << 6) + (a << 5) + (d << 4) + (m << 3)
+        end
+      end
     end
   end
 end

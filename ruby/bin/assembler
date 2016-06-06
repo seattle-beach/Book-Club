@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+
+require 'assembler'
+include Nand2Tetris
+
+def exit_usage
+  puts "Usage: #{__FILE__} file.asm"
+  exit
+end
+
+exit_usage if ARGV.size != 1
+
+in_file = ARGV.shift
+out_file = in_file.sub(/(?:\.[^.]*)?$/, '.hack')
+
+input = File.read(in_file)
+parser = Assembler::Parser.new
+instructions = parser.parse(input)
+
+machine_code = instructions.map {|i| i.to_binary }
+output = machine_code.map {|i| i.to_s(2).rjust(16, ?0) }.join("\n")
+File.write(out_file, output)
