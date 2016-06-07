@@ -30,13 +30,19 @@ module Nand2Tetris::Assembler
 
     def test_c_instructions
       instructions = @parser.parse('D=A')
-      assert_equal [Instructions::C.new(?D, ?A, nil)], instructions
+      assert_equal [Instructions::C.new(?D, ?A, '')], instructions
 
       instructions = @parser.parse('D=D+A')
-      assert_equal [Instructions::C.new(?D, 'D+A', nil)], instructions
+      assert_equal [Instructions::C.new(?D, 'D+A', '')], instructions
 
       instructions = @parser.parse('M=D')
-      assert_equal [Instructions::C.new(?M, ?D, nil)], instructions
+      assert_equal [Instructions::C.new(?M, ?D, '')], instructions
+
+      instructions = @parser.parse('D;JGT')
+      assert_equal [Instructions::C.new('', ?D, 'JGT')], instructions
+
+      instructions = @parser.parse('0;JMP')
+      assert_equal [Instructions::C.new('', ?0, 'JMP')], instructions
     end
   end
 
@@ -53,14 +59,20 @@ module Nand2Tetris::Assembler
     end
 
     def test_c_instruction
-      instruction = Instructions::C.new(?D, ?A, nil)
+      instruction = Instructions::C.new(?D, ?A, '')
       assert_equal 0b1110_1100_0001_0000, instruction.to_binary
 
-      instruction = Instructions::C.new(?D, 'D+A', nil)
+      instruction = Instructions::C.new(?D, 'D+A', '')
       assert_equal 0b1110_0000_1001_0000, instruction.to_binary
 
-      instruction = Instructions::C.new(?M, ?D, nil)
+      instruction = Instructions::C.new(?M, ?D, '')
       assert_equal 0b1110_0001_1000_1000, instruction.to_binary
+
+      instruction = Instructions::C.new('', ?D, 'JGT')
+      assert_equal 0b1110_0001_1000_0001, instruction.to_binary
+
+      instruction = Instructions::C.new('', ?0, 'JMP')
+      assert_equal 0b1110_1010_1000_0111, instruction.to_binary
     end
   end
 end

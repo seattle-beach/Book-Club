@@ -21,6 +21,10 @@ module Nand2Tetris
       'D|A' => 0b0010101, 'D|M' => 0b1010101,
     }
 
+    JUMPS = Hash[
+      %w[ JGT JEQ JGE JLT JNE JLE JMP ].map.with_index {|j,i| [j, i+1] }
+    ]
+
     class Parser
       def parse(input)
         input.split("\n").each.with_object([]) {|line, instructions|
@@ -33,9 +37,9 @@ module Nand2Tetris
                           when /^
                             (?:([AMD]{1,3}(?==))=)?
                             (#{COMPS.keys.map {|x| Regexp.escape(x)}.join(?|)})?
-                            (;J(?:GT|EQ|GE|LT|LE|NE|MP))?
+                            (?:;(#{JUMPS.keys.join(?|)}))?
                               $/x
-                            Instructions::C.new($1, $2, $3)
+                            Instructions::C.new(*$~.captures.map(&:to_s))
                           end
         }
       end
@@ -51,7 +55,8 @@ module Nand2Tetris
       C = Struct.new(:dest, :comp, :jump) do
         def to_binary
           dest_bin = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
-          ('111%07b%s000' % [COMPS[comp], dest_bin]).to_i(2)
+          jump_bin = JUMPS.fetch(jump, 0)
+          ('111%07b%s%03b' % [COMPS[comp], dest_bin, jump_bin]).to_i(2)
         end
       end
     end
