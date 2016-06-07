@@ -50,10 +50,8 @@ module Nand2Tetris
 
       C = Struct.new(:dest, :comp, :jump) do
         def to_binary
-          a = dest.include?(?A) ? 1 : 0
-          m = dest.include?(?M) ? 1 : 0
-          d = dest.include?(?D) ? 1 : 0
-          (0b111 << 13) + (COMPS[comp] << 6) + (a << 5) + (d << 4) + (m << 3)
+          dest_bin = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
+          ('111%07b%s000' % [COMPS[comp], dest_bin]).to_i(2)
         end
       end
     end
