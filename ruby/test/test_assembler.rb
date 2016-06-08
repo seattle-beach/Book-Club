@@ -23,12 +23,15 @@ module Nand2Tetris::Assembler
       assert_equal [], tree
 
       tree = @parser.parse(' @0 // Foo bar baz')
-      assert_equal [Node.new(:a, 0)], tree
+      assert_equal [Node.new(:a_constant, 0)], tree
     end
 
     def test_addresses
       tree = @parser.parse('@2')
-      assert_equal [Node.new(:a, 2)], tree
+      assert_equal [Node.new(:a_constant, 2)], tree
+
+      tree = @parser.parse('@R2')
+      assert_equal [Node.new(:a_symbol, 'R2')], tree
     end
 
     def test_computations
@@ -58,15 +61,20 @@ module Nand2Tetris::Assembler
       @transformer = Transformer.new
     end
 
-    def test_addresses
-      tree = [Node.new(:a, 2)]
+    def test_addressing_constants
+      tree = [Node.new(:a_constant, 2)]
       assert_equal '0000000000000010', @transformer.transform(tree)
 
-      tree = [Node.new(:a, 3)]
+      tree = [Node.new(:a_constant, 3)]
       assert_equal '0000000000000011', @transformer.transform(tree)
 
-      tree = [Node.new(:a, 0)]
+      tree = [Node.new(:a_constant, 0)]
       assert_equal '0000000000000000', @transformer.transform(tree)
+    end
+
+    def test_addressing_predefined_symbols
+      tree = [Node.new(:a_symbol, 'R2')]
+      assert_equal '0000000000000010', @transformer.transform(tree)
     end
 
     def test_computations

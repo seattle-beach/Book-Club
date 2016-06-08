@@ -33,6 +33,10 @@ module Nand2Tetris
       %w[ JGT JEQ JGE JLT JNE JLE JMP ].map.with_index {|j,i| [j, i+1] }
     ]
 
+    # A user-defined symbol can be any sequence of letters, digits, underscore (_),
+    # dot (.), dollar sign ($), and colon (:) that does not begin with a digit
+    VALID_SYMBOL = /(?!\d)[\w.$:]+/
+
     class Parser
       def parse(input)
         input.split("\n")
@@ -42,7 +46,9 @@ module Nand2Tetris
 
           instructions << case line
                           when /^@(\d+)$/
-                            Node.new(:a, $1.to_i)
+                            Node.new(:a_constant, $1.to_i)
+                          when /^@(#{VALID_SYMBOL})$/
+                            Node.new(:a_symbol, $1)
                           when /^
                             (?:([AMD]{1,3}(?==))=)?
                             (#{COMPS.keys.map {|x| Regexp.escape(x)}.join(?|)})?
@@ -57,19 +63,35 @@ module Nand2Tetris
     end
 
     class Transformer
+      PREDEFINED_SYMBOLS =
+        Hash[%w[ SP LCL ARG THIS THAT ].map.with_index.to_a]
+        .merge(Hash[(0..15).map {|i| ["R#{i}", i] }])
+        .merge('SCREEN' => 0x4000, 'KBD' => 0x6000)
+
       def transform(tree)
+        symbols = PREDEFINED_SYMBOLS.dup
+        symbol_mem_location = 0x0010
+        symbols.default_proc = ->(h,k) do
+          h[k] = symbol_mem_location
+          symbol_mem_location += 1
+        end
+
         tree.map {|node|
           case node.type
-          when :a
-            node.data.to_s(2).rjust(16, ?0)
+          when :a_constant
+            node.data
+          when :a_symbol
+            symbols[node.data]
           when :c
             dest, comp, jump = node.data
             dest = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
             jump = JUMPS.fetch(jump, 0)
-            '111%07b%s%03b' % [COMPS[comp], dest, jump]
+            ('111%07b%s%03b' % [COMPS[comp], dest, jump]).to_i(2)
           else
             raise TransformError.new(node)
           end
+        }.map {|code|
+          code.to_s(2).rjust(16, ?0)
         }.join("\n")
       end
     end
