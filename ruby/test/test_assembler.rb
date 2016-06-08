@@ -21,6 +21,9 @@ module Nand2Tetris::Assembler
 // Comments
       INPUT
       assert_equal [], instructions
+
+      instructions = @parser.parse(' @0 // Foo bar baz')
+      assert_equal [Instructions::A.new(0)], instructions
     end
 
     def test_a_instructions

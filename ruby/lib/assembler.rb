@@ -28,7 +28,7 @@ module Nand2Tetris
     class Parser
       def parse(input)
         input.split("\n").each.with_object([]) {|line, instructions|
-          line.gsub!(/^\s*(.*?)(?:\/\/.*)$/, '\1')
+          line.sub!(/^\s*(.*?)(?:\s*\/\/.*)?$/, '\1')
           next if line.empty?
 
           instructions << case line
@@ -40,6 +40,9 @@ module Nand2Tetris
                             (?:;(#{JUMPS.keys.join(?|)}))?
                               $/x
                             Instructions::C.new(*$~.captures.map(&:to_s))
+                          else
+                            puts "Wat: #{line}"
+                            exit
                           end
         }
       end
