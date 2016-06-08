@@ -1,5 +1,13 @@
 module Nand2Tetris
   module Assembler
+    class ParseError < StandardError
+      def initialize(line_number, line)
+        super("#{line_number}: #{line}")
+      end
+    end
+
+    class TransformError < StandardError; end
+
     COMPS = {
       '0'   => 0b0101010,
       '1'   => 0b0111111,
@@ -27,40 +35,42 @@ module Nand2Tetris
 
     class Parser
       def parse(input)
-        input.split("\n").each.with_object([]) {|line, instructions|
+        input.split("\n")
+          .each.with_index.with_object([]) {|(line, index), instructions|
           line.sub!(/^\s*(.*?)(?:\s*\/\/.*)?$/, '\1')
           next if line.empty?
 
           instructions << case line
                           when /^@(\d+)$/
-                            Instructions::A.new($1.to_i)
+                            [:a, $1.to_i]
                           when /^
                             (?:([AMD]{1,3}(?==))=)?
                             (#{COMPS.keys.map {|x| Regexp.escape(x)}.join(?|)})?
                             (?:;(#{JUMPS.keys.join(?|)}))?
                               $/x
-                            Instructions::C.new(*$~.captures.map(&:to_s))
+                            [:c].concat($~.captures.map(&:to_s))
                           else
-                            puts "Wat: #{line}"
-                            exit
+                            raise ParseError.new(index, line)
                           end
         }
       end
     end
 
-    module Instructions
-      A = Struct.new(:value) do
-        def to_binary
-          value
-        end
-      end
-
-      C = Struct.new(:dest, :comp, :jump) do
-        def to_binary
-          dest_bin = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
-          jump_bin = JUMPS.fetch(jump, 0)
-          ('111%07b%s%03b' % [COMPS[comp], dest_bin, jump_bin]).to_i(2)
-        end
+    class Transformer
+      def transform(tree)
+        tree.map {|node|
+          case node.first
+          when :a
+            node.last.to_s(2).rjust(16, ?0)
+          when :c
+            dest, comp, jump = node[1..-1]
+            dest = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
+            jump = JUMPS.fetch(jump, 0)
+            '111%07b%s%03b' % [COMPS[comp], dest, jump]
+          else
+            raise TransformError.new(node)
+          end
+        }.join("\n")
       end
     end
   end

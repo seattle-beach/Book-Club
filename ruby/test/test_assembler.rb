@@ -9,73 +9,77 @@ module Nand2Tetris::Assembler
     end
 
     def test_comments
-      instructions = @parser.parse('  // Comments are cool')
-      assert_equal [], instructions
+      tree = @parser.parse('  // Comments are cool')
+      assert_equal [], tree
 
-      instructions = @parser.parse('// Multiple // Comments')
-      assert_equal [], instructions
+      tree = @parser.parse('// Multiple // Comments')
+      assert_equal [], tree
 
-      instructions = @parser.parse(<<-INPUT)
+      tree = @parser.parse(<<-INPUT)
 // Multi
 // Line
 // Comments
       INPUT
-      assert_equal [], instructions
+      assert_equal [], tree
 
-      instructions = @parser.parse(' @0 // Foo bar baz')
-      assert_equal [Instructions::A.new(0)], instructions
+      tree = @parser.parse(' @0 // Foo bar baz')
+      assert_equal [[:a, 0]], tree
     end
 
-    def test_a_instructions
-      instructions = @parser.parse('@2')
-      assert_equal [Instructions::A.new(2)], instructions
+    def test_addresses
+      tree = @parser.parse('@2')
+      assert_equal [[:a, 2]], tree
     end
 
-    def test_c_instructions
-      instructions = @parser.parse('D=A')
-      assert_equal [Instructions::C.new(?D, ?A, '')], instructions
+    def test_computations
+      tree = @parser.parse('D=A')
+      assert_equal [[:c, ?D, ?A, '']], tree
 
-      instructions = @parser.parse('D=D+A')
-      assert_equal [Instructions::C.new(?D, 'D+A', '')], instructions
+      tree = @parser.parse('D=D+A')
+      assert_equal [[:c, ?D, 'D+A', '']], tree
 
-      instructions = @parser.parse('M=D')
-      assert_equal [Instructions::C.new(?M, ?D, '')], instructions
+      tree = @parser.parse('M=D')
+      assert_equal [[:c, ?M, ?D, '']], tree
 
-      instructions = @parser.parse('D;JGT')
-      assert_equal [Instructions::C.new('', ?D, 'JGT')], instructions
+      tree = @parser.parse('D;JGT')
+      assert_equal [[:c, '', ?D, 'JGT']], tree
 
-      instructions = @parser.parse('0;JMP')
-      assert_equal [Instructions::C.new('', ?0, 'JMP')], instructions
+      tree = @parser.parse('0;JMP')
+      assert_equal [[:c, '', ?0, 'JMP']], tree
     end
   end
 
-  class TestInstructions < Minitest::Test
-    def test_a_instruction
-      instruction = Instructions::A.new(2)
-      assert_equal 0b0000_0000_0000_0010, instruction.to_binary
-
-      instruction = Instructions::A.new(3)
-      assert_equal 0b0000_0000_0000_0011, instruction.to_binary
-
-      instruction = Instructions::A.new(0)
-      assert_equal 0b0000_0000_0000_0000, instruction.to_binary
+  class TestTransformer < Minitest::Test
+    def setup
+      @transformer = Transformer.new
     end
 
-    def test_c_instruction
-      instruction = Instructions::C.new(?D, ?A, '')
-      assert_equal 0b1110_1100_0001_0000, instruction.to_binary
+    def test_addresses
+      tree = [[:a, 2]]
+      assert_equal '0000000000000010', @transformer.transform(tree)
 
-      instruction = Instructions::C.new(?D, 'D+A', '')
-      assert_equal 0b1110_0000_1001_0000, instruction.to_binary
+      tree = [[:a, 3]]
+      assert_equal '0000000000000011', @transformer.transform(tree)
 
-      instruction = Instructions::C.new(?M, ?D, '')
-      assert_equal 0b1110_0011_0000_1000, instruction.to_binary
+      tree = [[:a, 0]]
+      assert_equal '0000000000000000', @transformer.transform(tree)
+    end
 
-      instruction = Instructions::C.new('', ?D, 'JGT')
-      assert_equal 0b1110_0011_0000_0001, instruction.to_binary
+    def test_computations
+      tree = [[:c, ?D, ?A, '']]
+      assert_equal '1110110000010000', @transformer.transform(tree)
 
-      instruction = Instructions::C.new('', ?0, 'JMP')
-      assert_equal 0b1110_1010_1000_0111, instruction.to_binary
+      tree = [[:c, ?D, 'D+A', '']]
+      assert_equal '1110000010010000', @transformer.transform(tree)
+
+      tree = [[:c, ?M, ?D, '']]
+      assert_equal '1110001100001000', @transformer.transform(tree)
+
+      tree = [[:c, '', ?D, 'JGT']]
+      assert_equal '1110001100000001', @transformer.transform(tree)
+
+      tree = [[:c, '', ?0, 'JMP']]
+      assert_equal '1110101010000111', @transformer.transform(tree)
     end
   end
 end
