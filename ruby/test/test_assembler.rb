@@ -66,10 +66,10 @@ module Nand2Tetris::Assembler
       assert_equal 0b1110_0000_1001_0000, instruction.to_binary
 
       instruction = Instructions::C.new(?M, ?D, '')
-      assert_equal 0b1110_0001_1000_1000, instruction.to_binary
+      assert_equal 0b1110_0011_0000_1000, instruction.to_binary
 
       instruction = Instructions::C.new('', ?D, 'JGT')
-      assert_equal 0b1110_0001_1000_0001, instruction.to_binary
+      assert_equal 0b1110_0011_0000_0001, instruction.to_binary
 
       instruction = Instructions::C.new('', ?0, 'JMP')
       assert_equal 0b1110_1010_1000_0111, instruction.to_binary
