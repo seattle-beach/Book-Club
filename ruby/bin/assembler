@@ -17,8 +17,9 @@ out_file = in_file.sub(/(?:\.[^.]*)?$/, '.hack')
 
 input = File.read(in_file)
 parser = Assembler::Parser.new
-instructions = parser.parse(input)
+tree = parser.parse(input)
 
-machine_code = instructions.map {|i| i.to_binary }
-output = machine_code.map {|i| i.to_s(2).rjust(16, ?0) }.join("\n")
+transformer = Assembler::Transformer.new
+output = transformer.transform(tree)
+
 File.write(out_file, output)
