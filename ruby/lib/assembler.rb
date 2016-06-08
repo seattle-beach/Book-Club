@@ -2,7 +2,7 @@ module Nand2Tetris
   module Assembler
     class ParseError < StandardError
       def initialize(line_number, line)
-        super("#{line_number}: #{line}")
+        super("Line #{line_number}: #{line}")
       end
     end
 

@@ -15,11 +15,14 @@ exit_usage if ARGV.size != 1
 in_file = ARGV.shift
 out_file = in_file.sub(/(?:\.[^.]*)?$/, '.hack')
 
-input = File.read(in_file)
-parser = Assembler::Parser.new
-tree = parser.parse(input)
+begin
+  input = File.read(in_file)
+  parser = Assembler::Parser.new
+  tree = parser.parse(input)
 
-transformer = Assembler::Transformer.new
-output = transformer.transform(tree)
-
-File.write(out_file, output)
+  transformer = Assembler::Transformer.new
+  output = transformer.transform(tree)
+  File.write(out_file, output)
+rescue Assembler::ParseError, Assembler::TransformError => e
+  puts "Error parsing #{in_file}: #{e.message}"
+end
