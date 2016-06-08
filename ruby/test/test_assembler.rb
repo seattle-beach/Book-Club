@@ -23,29 +23,29 @@ module Nand2Tetris::Assembler
       assert_equal [], tree
 
       tree = @parser.parse(' @0 // Foo bar baz')
-      assert_equal [[:a, 0]], tree
+      assert_equal [Node.new(:a, 0)], tree
     end
 
     def test_addresses
       tree = @parser.parse('@2')
-      assert_equal [[:a, 2]], tree
+      assert_equal [Node.new(:a, 2)], tree
     end
 
     def test_computations
       tree = @parser.parse('D=A')
-      assert_equal [[:c, ?D, ?A, '']], tree
+      assert_equal [Node.new(:c, [?D, ?A, ''])], tree
 
       tree = @parser.parse('D=D+A')
-      assert_equal [[:c, ?D, 'D+A', '']], tree
+      assert_equal [Node.new(:c, [?D, 'D+A', ''])], tree
 
       tree = @parser.parse('M=D')
-      assert_equal [[:c, ?M, ?D, '']], tree
+      assert_equal [Node.new(:c, [?M, ?D, ''])], tree
 
       tree = @parser.parse('D;JGT')
-      assert_equal [[:c, '', ?D, 'JGT']], tree
+      assert_equal [Node.new(:c, ['', ?D, 'JGT'])], tree
 
       tree = @parser.parse('0;JMP')
-      assert_equal [[:c, '', ?0, 'JMP']], tree
+      assert_equal [Node.new(:c, ['', ?0, 'JMP'])], tree
     end
 
     def test_error
@@ -59,35 +59,35 @@ module Nand2Tetris::Assembler
     end
 
     def test_addresses
-      tree = [[:a, 2]]
+      tree = [Node.new(:a, 2)]
       assert_equal '0000000000000010', @transformer.transform(tree)
 
-      tree = [[:a, 3]]
+      tree = [Node.new(:a, 3)]
       assert_equal '0000000000000011', @transformer.transform(tree)
 
-      tree = [[:a, 0]]
+      tree = [Node.new(:a, 0)]
       assert_equal '0000000000000000', @transformer.transform(tree)
     end
 
     def test_computations
-      tree = [[:c, ?D, ?A, '']]
+      tree = [Node.new(:c, [?D, ?A, ''])]
       assert_equal '1110110000010000', @transformer.transform(tree)
 
-      tree = [[:c, ?D, 'D+A', '']]
+      tree = [Node.new(:c, [?D, 'D+A', ''])]
       assert_equal '1110000010010000', @transformer.transform(tree)
 
-      tree = [[:c, ?M, ?D, '']]
+      tree = [Node.new(:c, [?M, ?D, ''])]
       assert_equal '1110001100001000', @transformer.transform(tree)
 
-      tree = [[:c, '', ?D, 'JGT']]
+      tree = [Node.new(:c, ['', ?D, 'JGT'])]
       assert_equal '1110001100000001', @transformer.transform(tree)
 
-      tree = [[:c, '', ?0, 'JMP']]
+      tree = [Node.new(:c, ['', ?0, 'JMP'])]
       assert_equal '1110101010000111', @transformer.transform(tree)
     end
 
     def test_error
-      assert_raises(TransformError) { @transformer.transform(['omg']) }
+      assert_raises(TransformError) { @transformer.transform([Node.new(:b, 'omg')]) }
     end
   end
 end

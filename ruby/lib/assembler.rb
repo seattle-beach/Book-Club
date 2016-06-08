@@ -42,13 +42,13 @@ module Nand2Tetris
 
           instructions << case line
                           when /^@(\d+)$/
-                            [:a, $1.to_i]
+                            Node.new(:a, $1.to_i)
                           when /^
                             (?:([AMD]{1,3}(?==))=)?
                             (#{COMPS.keys.map {|x| Regexp.escape(x)}.join(?|)})?
                             (?:;(#{JUMPS.keys.join(?|)}))?
                               $/x
-                            [:c].concat($~.captures.map(&:to_s))
+                            Node.new(:c, $~.captures.map(&:to_s))
                           else
                             raise ParseError.new(index, line)
                           end
@@ -58,13 +58,12 @@ module Nand2Tetris
 
     class Transformer
       def transform(tree)
-        Array(tree).map {|node|
-          node = Array(node)
-          case node.first
+        tree.map {|node|
+          case node.type
           when :a
-            node.last.to_s(2).rjust(16, ?0)
+            node.data.to_s(2).rjust(16, ?0)
           when :c
-            dest, comp, jump = node[1..-1]
+            dest, comp, jump = node.data
             dest = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
             jump = JUMPS.fetch(jump, 0)
             '111%07b%s%03b' % [COMPS[comp], dest, jump]
@@ -74,5 +73,7 @@ module Nand2Tetris
         }.join("\n")
       end
     end
+
+    Node = Struct.new(*%i[ type data ])
   end
 end
