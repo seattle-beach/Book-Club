@@ -49,6 +49,8 @@ module Nand2Tetris
                             Node.new(:a_constant, $1.to_i)
                           when /^@(#{VALID_SYMBOL})$/
                             Node.new(:a_symbol, $1)
+                          when /^\((#{VALID_SYMBOL})\)$/
+                            Node.new(:label, $1)
                           when /^
                             (?:([AMD]{1,3}(?==))=)?
                             (#{COMPS.keys.map {|x| Regexp.escape(x)}.join(?|)})?

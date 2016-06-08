@@ -51,6 +51,11 @@ module Nand2Tetris::Assembler
       assert_equal [Node.new(:c, ['', ?0, 'JMP'])], tree
     end
 
+    def test_labels
+      tree = @parser.parse('(LOOP)')
+      assert_equal [Node.new(:label, 'LOOP')], tree
+    end
+
     def test_error
       assert_raises(ParseError) { @parser.parse('omg') }
       assert_raises(ParseError) { @parser.parse('@2R') }
