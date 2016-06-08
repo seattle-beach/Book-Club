@@ -41,7 +41,7 @@ module Nand2Tetris
       def parse(input)
         input.split("\n")
           .each.with_index.with_object([]) {|(line, index), instructions|
-          line.sub!(/^\s*(.*?)(?:\s*\/\/.*)?$/, '\1')
+          line.sub!(/^\s*(.*?)\s*(?:\/\/.*)?$/, '\1')
           next if line.empty?
 
           instructions << case line

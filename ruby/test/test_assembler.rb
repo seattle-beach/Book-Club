@@ -24,6 +24,9 @@ module Nand2Tetris::Assembler
 
       tree = @parser.parse(' @0 // Foo bar baz')
       assert_equal [Node.new(:a_constant, 0)], tree
+
+      tree = @parser.parse(' @0    ')
+      assert_equal [Node.new(:a_constant, 0)], tree
     end
 
     def test_addresses
