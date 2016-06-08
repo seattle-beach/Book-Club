@@ -78,6 +78,21 @@ module Nand2Tetris::Assembler
       assert_equal '0000000000000010', @transformer.transform(tree)
     end
 
+    def test_addressing_variable_symbols
+      tree = [
+        Node.new(:a_symbol, 'foo'),
+        Node.new(:a_symbol, 'bar'),
+        Node.new(:a_symbol, 'baz'),
+        Node.new(:a_symbol, 'foo'),
+      ]
+      assert_equal <<-EXPECTED.chomp, @transformer.transform(tree)
+0000000000010000
+0000000000010001
+0000000000010010
+0000000000010000
+      EXPECTED
+    end
+
     def test_computations
       tree = [Node.new(:c, [?D, ?A, ''])]
       assert_equal '1110110000010000', @transformer.transform(tree)

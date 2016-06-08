@@ -74,6 +74,7 @@ module Nand2Tetris
         symbols.default_proc = ->(h,k) do
           h[k] = symbol_mem_location
           symbol_mem_location += 1
+          h[k]
         end
 
         tree.map {|node|
