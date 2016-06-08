@@ -53,6 +53,7 @@ module Nand2Tetris::Assembler
 
     def test_error
       assert_raises(ParseError) { @parser.parse('omg') }
+      assert_raises(ParseError) { @parser.parse('@2R') }
     end
   end
 
