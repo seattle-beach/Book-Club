@@ -65,26 +65,17 @@ module Nand2Tetris
     end
 
     class Transformer
-      PREDEFINED_SYMBOLS =
-        Hash[%w[ SP LCL ARG THIS THAT ].map.with_index.to_a]
-        .merge(Hash[(0..15).map {|i| ["R#{i}", i] }])
-        .merge('SCREEN' => 0x4000, 'KBD' => 0x6000)
-
       def transform(tree)
-        symbols = PREDEFINED_SYMBOLS.dup
-        symbol_mem_location = 0x0010
-        symbols.default_proc = ->(h,k) do
-          h[k] = symbol_mem_location
-          symbol_mem_location += 1
-          h[k]
-        end
+        symbol_table = SymbolTable.new(tree)
 
-        tree.map {|node|
+        tree.reject {|node|
+          node.type == :label
+        }.map {|node|
           case node.type
           when :a_constant
             node.data
           when :a_symbol
-            symbols[node.data]
+            symbol_table[node.data]
           when :c
             dest, comp, jump = node.data
             dest = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
@@ -96,6 +87,34 @@ module Nand2Tetris
         }.map {|code|
           code.to_s(2).rjust(16, ?0)
         }.join("\n")
+      end
+    end
+
+    class SymbolTable < SimpleDelegator
+      PREDEFINED_SYMBOLS =
+        Hash[%w[ SP LCL ARG THIS THAT ].map.with_index.to_a]
+        .merge(Hash[(0..15).map {|i| ["R#{i}", i] }])
+        .merge('SCREEN' => 0x4000, 'KBD' => 0x6000)
+
+      def initialize(tree)
+        symbols = PREDEFINED_SYMBOLS.dup
+        address = 0
+        tree.each do |node|
+          if node.type == :label
+            symbols[node.data] = address
+          else
+            address += 1
+          end
+        end
+
+        symbol_mem_location = 0x0010
+        symbols.default_proc = ->(h,k) do
+          h[k] = symbol_mem_location
+          symbol_mem_location += 1
+          h[k]
+        end
+
+        super(symbols)
       end
     end
 

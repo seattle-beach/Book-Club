@@ -115,6 +115,21 @@ module Nand2Tetris::Assembler
       assert_equal '1110101010000111', @transformer.transform(tree)
     end
 
+    def test_labels
+      tree = [
+        Node.new(:label, 'FOO'),
+        Node.new(:a_symbol, 'bar'),
+        Node.new(:label, 'LOOP'),
+        Node.new(:a_symbol, 'FOO'),
+        Node.new(:a_symbol, 'LOOP'),
+      ]
+      assert_equal <<-EXPECTED.chomp, @transformer.transform(tree)
+0000000000010000
+0000000000000000
+0000000000000001
+      EXPECTED
+    end
+
     def test_error
       assert_raises(TransformError) { @transformer.transform([Node.new(:b, 'omg')]) }
     end
