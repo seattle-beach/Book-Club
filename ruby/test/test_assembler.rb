@@ -47,6 +47,10 @@ module Nand2Tetris::Assembler
       tree = @parser.parse('0;JMP')
       assert_equal [[:c, '', ?0, 'JMP']], tree
     end
+
+    def test_error
+      assert_raises(ParseError) { @parser.parse('omg') }
+    end
   end
 
   class TestTransformer < Minitest::Test
@@ -80,6 +84,10 @@ module Nand2Tetris::Assembler
 
       tree = [[:c, '', ?0, 'JMP']]
       assert_equal '1110101010000111', @transformer.transform(tree)
+    end
+
+    def test_error
+      assert_raises(TransformError) { @transformer.transform(['omg']) }
     end
   end
 end

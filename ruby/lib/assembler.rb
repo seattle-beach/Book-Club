@@ -58,7 +58,8 @@ module Nand2Tetris
 
     class Transformer
       def transform(tree)
-        tree.map {|node|
+        Array(tree).map {|node|
+          node = Array(node)
           case node.first
           when :a
             node.last.to_s(2).rjust(16, ?0)
