@@ -78,7 +78,7 @@ module Nand2Tetris
             symbol_table[node.data]
           when :c
             dest, comp, jump = node.data
-            dest = %w[A D M].map {|x| dest.include?(x) ? ?1 : ?0 }.join
+            dest = %w[A D M].map {|x| dest.include?(x) ? 1 : 0 }.join
             jump = JUMPS.fetch(jump, 0)
             ('111%07b%s%03b' % [COMPS[comp], dest, jump]).to_i(2)
           else
@@ -93,8 +93,8 @@ module Nand2Tetris
     class SymbolTable < SimpleDelegator
       PREDEFINED_SYMBOLS =
         Hash[%w[ SP LCL ARG THIS THAT ].map.with_index.to_a]
-        .merge(Hash[(0..15).map {|i| ["R#{i}", i] }])
-        .merge('SCREEN' => 0x4000, 'KBD' => 0x6000)
+          .merge(Hash[(0..15).map {|i| ["R#{i}", i] }])
+          .merge('SCREEN' => 0x4000, 'KBD' => 0x6000)
 
       def initialize(tree)
         symbols = PREDEFINED_SYMBOLS.dup
