@@ -98,6 +98,7 @@ module Nand2Tetris
 
       def initialize(tree)
         symbols = PREDEFINED_SYMBOLS.dup
+
         address = 0
         tree.each do |node|
           if node.type == :label
