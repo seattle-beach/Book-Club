@@ -1,0 +1,3 @@
+tools
+*.out
+projects/06/**/*.hack
