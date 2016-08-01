@@ -15,3 +15,7 @@ As of July 26th, book club meetings will be at lunch on Tuesdays.
 * Decide facilitator for next week
 * Decide secretary for next week
 * Decide reading assignment for next week
+
+## Understanding Computation
+
+[Meeting notes](understanding_computation/meeting_notes.md)

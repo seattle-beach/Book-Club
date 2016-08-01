@@ -1,0 +1,3 @@
+[submodule "understanding_computation/alpha"]
+	path = understanding_computation/alpha
+	url = https://github.com/kejadlen/understanding_computation.git
