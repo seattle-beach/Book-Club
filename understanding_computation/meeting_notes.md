@@ -1,3 +1,7 @@
+## 2016.08.09 Week Three
+
+- Read until 103 (end of chapter 3)
+
 ## 2016.07.26 - Week One
 
 - Big step vs. small step semantics - what is the actual difference?
