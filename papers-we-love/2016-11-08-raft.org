@@ -1,0 +1,202 @@
+* Raft
+  [[https://raft.github.io/raft.pdf][In Search of an Understandable Consensus Algorithm]]
+[[https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-857.pdf][Analysis of Raft Consensus]]
+  [[http://thesecretlivesofdata.com/raft/][The Secret Lives of Data]]
+
+* Distributed Computing
+** CAP Theorem
+- Consistency
+- Availability
+- Partition Tolerance
+
+* Paxos (Leslie Lamport, 1989)
+- Google (Chubby in BigTable)
+- Amazon AWS
+- Apache Mesos
+- Microsoft (Bing, Azure)
+- VMWare
+- Oracle
+- Neo4j
+
+* Paxos (cont.)
+- single-decree Paxos: can reach agreement on a single decision (i.e., one log entry)
+- multi-Paxos: multiple instances of single-decree Paxos to achieve a series of decisions
+
+"correctness has been proven, and it is efficient in the normal case."
+
+"exceptionally difficult to understand"
+
+"we were not able to understand the complete protocol until after reading several simplified explanations and designing our own alternative protocol, a process that took almost a year"
+
+- no widely agreed-upon algorithm for multi-Paxos
+- symmetric peer-to-peer approach
+
+"real implementations are so different from Paxos that the proofs have little value"
+
+"There are significant gaps between the description of the Paxos algorithm and the needs of a real-world system... the final system will be based on an unproven protocol." -Chubby implementers
+
+* Raft
+- etcd
+- RethinkDB
+- Consul
+
+** primary, most important goal was /understandability/
+- problem decomposition
+- simplify the state space by reducing the number of states to consider
+- "randomized approaches introduce nondeterminism, but they tend to reduce the state space... (choose any; it doesn't matter)"
+
+** novel features
+- Strong leader (logs only go from leader -> followers)
+- Leader election (use randomized timers to elect leaders)
+- Membership changes (parallel changes pattern)
+
+** Client -> Server [ Consensus Module (-> Servers) -> Log -> State Machine ] -> Client
+- note: clients are external here
+
+** guaranteed properties
+- Election Safety: only one leader per term
+- Leader Append-Only: leader never changes existing log entries
+- Log Matching: if two log entries are the same, logs are identical up through that entry
+- Leader Completeness: if a log entry is committed in a term, then that entry will be present in logs of future leaders
+- State Machine Safety: if a server has applied an entry at a given index, no other server will apply a different entry for the same index
+
+** CAP
+- linearizable semantics (each operation appears to execute instantaneously, exactly once, at some point between its invocation and response)
+
+* Basics
+** server states
+- leader
+- follower
+- candidate
+
+** time divided into terms
+- numbered with consecutive integers
+- each term starts with an election
+- act as a logical clock in Raft
+- each server stores current term number
+- terms exchanged each time servers communicate, updating if necessary
+- if a candidate/leader gets a newer term, it immediately reverts to a follower
+- requests with stale terms are rejected
+
+
+* Leader Election
+** servers start as followers
+
+** leaders send heartbeats (AppendEntries w/no log entries)
+
+** if a server gets no communication over an /election timeout/
+- increment current term
+- transitions to candidate state
+- votes for itself and issues RequestVote to other servers
+
+** each server votes for at most one candidate in a given term, on a first-come-first-served basis
+
+** winning an election
+- a candidate wins if it gets votes from a majority of servers in the full cluster
+- on winning, candidate becomes leader and sends heartbeats to other servers to establish authority
+
+** if another server establishes itself as leader
+- if the term is >= candidate's term, candidate recognizes leader as legitimate and returns to being a follower
+- else, rejects the request and continues in candidate state
+
+** if there is no winner
+- could happen with split vote, etc.
+- each candidate times out and starts a new election (incrementing term ane sending RequestVote)
+- election timeouts are chosen randomly from a fixed interval to avoid this
+
+** discarded alternative implementation of a ranking system due to understandability
+- randomized retry approach more obvious and understandable
+
+* Log Replication (on getting a request (state machine command) from a client)
+** leader appends log entry and sends AppendEntries to servers
+- sends AppendEntries indefinitely
+- log entries store commands with the term number (from leader) and an integer index
+
+** log entries are /committed/ when the leader has replicated it on a majority of servers
+- once committed, leader returns the result to the client
+
+** leader keeps track of highest committed index and sends that with AppendEntries
+
+** leader also includes index and term of immediately preceding entry with AppendEntries
+- followers reject request if not consistent
+
+** leader handles inconsistencies by forcing follower logs to duplicate its own
+
+** leader maintains /nextIndex/ for each follower
+- on becoming leader, /nextIndex/ is re-initialized to the next index in the leader's log
+- after rejection due to inconsistency, /nextIndex/ is decremented for the follower and leader retries AppendEntries
+- optimization can be done here to reduce the number of rejected AppendEntries; in practice, this should be infrequent
+
+** thus, logs automatically converge (satisfying Log Matching) and the leader never overwrites or deletes entries in its own log (satisfying Leader Append-Only)
+
+* Safety
+** election restriction
+- ensures Leader Completeness
+- prevents candidates from winning unles its log has all committed entries
+- "up-to-date" is determined by index and term of last entries in the logs
+
+** committing entries from previous terms
+- leader cannot immediately conclude that an entry from a previous term is committed once it is stored on a majority of servers!
+- therefore, only commits log entries from current term
+- more conservative approach for simplicity
+- easier to reason about entries since they maintain the same term number across logs
+
+** safety argument
+- proof by contradiction that given Leader Completeness, we can prove State Machine Safety
+
+** follower/candidate crashes
+- handled by retrying indefinitely since Raft requests are idempotent
+
+** timing and availability
+- safety must not depend on timing
+
+*** /broadcastTime/ << /electionTimeout/ << /MTBF/
+- /broadcastTime/ = average time for leader to send parallel requests to all servers and receive responses
+  - usually between 0.5ms to 20ms depending on the storage technology
+- /electionTimeout/ (described above)
+- /MTBF/ = mean time between failures (for a single server)
+- /broadcastTime/ << /electionTimeout/ so leaders can reliably send heartbeats to prevent followers from starting elections
+- /electionTimeout/ << /MTBF/ so system makes steady progress
+- /electionTimeout/ should be as small as possible since the system is unavailable for roughly this period when a leader crashes
+  - usually between 10ms and 500ms
+
+* Misc
+** cluster membership changes
+- use the parallel changes pattern (expand/contract) to handle gracefully
+- /joint consensus/ for old *and* new configuration
+- cluster configuration stored using special entries in the log
+
+*** reconfiguration issues
+**** new servers with no log entries
+- join as non-voting members so they get AppendEntries but not considered for majorities
+**** cluster leader might not be part of the new configuration
+- leader steps down (becomes a follower) once it commits the `C_new` configuration entry
+**** removed servers can disrupt the cluster
+- they won't get heartbeats, so will time out and start elections
+- servers ignore RequestVote requests when they believe a current leader exists (if they're within the /electionTimeout/ of hearing from a current leader)
+
+** log compaction
+- snapshotting
+- followers can also snapshot on their own
+- InstallSnapshot from leader to followers that are too far behind
+
+** client interaction
+- clients pick a random server to connect to
+- if the server is not the leader, it rejects the request and tells the client the current leader
+
+*** read-only operations
+- can be handled without writing to the log, but linearizable reads must not return stale data
+- each leader commits a `no-op` entry at the start of its term to guarantee that it has all committed entries
+- each leader exchanges heartbeats with a majority of the cluster before responding to a read-only request to verify it has not been deposed
+
+** understandability
+- user study of students between learning Paxos vs. Raft
+
+** correctness
+- stuff I didn't understand
+
+** performance
+- without randomness, leader elections consistently took >10s due to split votes
+- 5ms of randomness -> median downtime of 287ms
+- 50ms of randomness -> worst case of 513ms (over 1000 trials)
+- /electionTimeout/ of 12-24ms resulted in 35ms average (152ms max) to elect leader, but 150-300ms recommended
