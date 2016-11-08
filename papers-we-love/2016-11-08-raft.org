@@ -1,7 +1,7 @@
 * Raft
-  [[https://raft.github.io/raft.pdf][In Search of an Understandable Consensus Algorithm]]
-[[https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-857.pdf][Analysis of Raft Consensus]]
-  [[http://thesecretlivesofdata.com/raft/][The Secret Lives of Data]]
+- [[https://raft.github.io/raft.pdf][In Search of an Understandable Consensus Algorithm]]
+- [[https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-857.pdf][Analysis of Raft Consensus]]
+- [[http://thesecretlivesofdata.com/raft/][The Secret Lives of Data]]
 
 * Distributed Computing
 ** CAP Theorem
