@@ -19,3 +19,7 @@ As of July 26th, book club meetings will be at lunch on Tuesdays.
 ## Understanding Computation
 
 [Meeting notes](understanding_computation/meeting_notes.md)
+
+## Ideas
+
+- [Haskell Programming From First Principles](https://ileriseviye.wordpress.com/2017/01/01/one-year-with-haskell-programming-from-first-principles/)
