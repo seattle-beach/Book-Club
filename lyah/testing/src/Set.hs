@@ -1,14 +1,15 @@
 module Set
   ( Set(..)
   , isEmpty
+  , size
   ) where
 
---data Set = A | Nothing deriving (Show)
 data Set = Set deriving (Show)
 
---items :: a -> Contents
---items a = Contents a
+size :: [a] -> Int
+size [] = 0
+size (_:xs) = 1 + (size xs)
 
-isEmpty :: Set -> [a] -> Bool
-isEmpty _ [] = True
-isEmpty _ _ = False
+isEmpty :: [a] -> Bool
+isEmpty [] = True
+isEmpty _ = False
